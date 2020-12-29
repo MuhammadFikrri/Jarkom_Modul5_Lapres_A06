@@ -3,3 +3,9 @@
 ## Kelompok A06
 - 5111840000124	-	Sandra Agnes Oktaviana
 - 5111840000165	-	Muhammad Fikri Rabbani
+
+## Tree
+![](Image/tree.JPG)
+
+## Pembagian 
+![](Image/vlsm.JPG)
