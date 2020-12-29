@@ -4,13 +4,14 @@
 - 5111840000124	-	Sandra Agnes Oktaviana
 - 5111840000165	-	Muhammad Fikri Rabbani
 
+## B. Subnetting
 ## Tree
 ![](Image/tree.JPG)
 
 ## Pembagian 
 ![](Image/vlsm.JPG)
 
-## Topologi
+## A. Topologi
 ```
 # Switch
 uml_switch -unix switch1 > /dev/null < /dev/null &
@@ -213,4 +214,137 @@ address 192.168.0.11
 netmask 255.255.255.248
 gateway 192.168.0.9
 ```
+
+
+## C. Routing 
+
+- Pada setiap router setting sysctl: ` nano /etc/sysctl.conf` lalu hapus tagar pada `net.ipv4.ip_forward=1`
+
+- bash `sysctl -p`
+
+- buat route.sh pada setiap router;
+
+pada SURABAYA
+
+```
+route add -net 192.168.1.0 netmask 255.255.255.0 gw 192.168.0.2
+route add -net 192.168.2.0 netmask 255.255.255.0 gw 192.168.0.6
+route add -net 192.168.0.8 netmask 255.255.255.248 gw 192.168.0.2
+route add -net 10.151.73.56 netmask 255.255.255.248 gw 192.168.0.6
+```
+
+pada BATU
+```
+route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.5
+```
+
+pada KEDIRI
+`route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.1`
+
+- `bash route.sh`
+
+## D. DHCP Server 
+
+- Pada SIDOARJO dan GRESIK ubah konfigurasi interface
+```
+auto eth0
+iface eth0 inet dhcp
+```
+
+- install dhcp-server `apt-get install isc-dhcp-server`
+- konfigurasi interfaces `INTERFACESv4="eth0"` dengan `nano /etc/default/isc-dhcp-server`
+- restart `service isc-dhcp-server restart`
+
+### DHCP Relay
+pada SURABAYA, KEDIRI, BATU
+
+- install dhcp-relay `apt-get install isc-dhcp-relay` 
+- konfigurasi interface `nano /etc/default/isc-dhcp-relay`
+- server MOJOKERTO `SERVERS="10.151.73.59"` dan interfaces:
+
+pada SURABAYA: `INTERFACES="eth1 eth2"`
+
+pada KEDIRI: `INTERFACES="eth0 eth2"`
+
+pada BATU: `INTERFACES="eth0 eth1 eth2"`
+
+- restart `service isc-dhcp-relay restart`
+
+
+## soal 1
+Agar topologi yang kalian buat dapat mengakses keluar, kalian diminta untuk mengkonfigurasi
+SURABAYA menggunakan iptables, namun Bibah tidak ingin kalian menggunakan
+MASQUERADE.
+
+pada SURABAYA buat file route1.sh
+`iptables -t nat -A POSTROUTING -s 192.168.0.0/22 -o eth0 -j SNAT --to-source 10.151.72.30`
+
+lalu jalankan `bash route1.sh`
+
+
+
+# soal 2
+Kalian diminta untuk mendrop semua akses SSH dari luar Topologi (UML) Kalian pada server
+yang memiliki ip DMZ (DHCP dan DNS SERVER) pada SURABAYA demi menjaga keamanan.
+
+pada SURABAYA buat file route2.sh
+`iptables -A FORWARD -d 10.151.73.56/29 -i eth0 -p tcp --dport 22 -j DROP`
+
+lalu jalankan `bash route2.sh`
+
+- di putty buat koneksi ssh ke MALANG `nc 10.151.73.59 22` 
+
+- cek di Malang dengan `nc -l -p 22` apakah paket berhasil di drop / tidak muncul paket yang sama.
+
+## soal 3
+Karena tim kalian maksimal terdiri dari 3 orang, Bibah meminta kalian untuk membatasi DHCP
+dan DNS server hanya boleh menerima maksimal 3 koneksi ICMP secara bersamaan yang berasal dari
+mana saja menggunakan iptables pada masing masing server, selebihnya akan di DROP.
+
+pada MALANG dan MOJOKERTO buat file route3.sh
+`iptables -A INPUT -p icmp -m connlimit --connlimit-above 3 --connlimit-mask 0 -j DROP`
+
+- bash route3.sh
+
+- cek dengan ping MALANG/MOJOKERTO sebanyak 4 kali dari UML berbeda, maka yang ke 4 tidak bisa
+
+
+
+kemudian kalian diminta untuk membatasi akses ke MALANG yang berasal dari SUBNET
+SIDOARJO dan SUBNET GRESIK dengan peraturan sebagai berikut:
+## (4) Akses dari subnet SIDOARJO hanya diperbolehkan pada pukul 07.00 - 17.00 pada hari Senin sampai Jumat.
+
+pada MALANG buat file route4.sh
+```
+iptables -A INPUT -s 192.168.2.0/24 -m time --timestart 07:00 --timestop 17:00 --weekdays Mon,Tue,Wed,Thu,Fri -j ACCEPT
+iptables -A INPUT -s 192.168.2.0/24 -j REJECT 
+```
+
+- bash route4.sh
+
+- cek dengan ping MALANG dari SIDOARJO
+akses hanya dapat pada jadwal yang diperbolehkan
+
+
+## (5) Akses dari subnet GRESIK hanya diperbolehkan pada pukul 17.00 hingga pukul 07.00 setiap harinya. Selain itu paket akan di REJECT.
+
+Karena kita memiliki 2 buah WEB Server, 
+
+## (6) Bibah ingin SURABAYA disetting sehingga setiap request dari client yang mengakses DNS Server akan didistribusikan secara bergantian pada PROBOLINGGO port 80 dan MADIUN port 80.
+
+
+## (7) Bibah ingin agar semua paket didrop oleh firewall (dalam topologi) tercatat dalam log pada setiap
+UML yang memiliki aturan drop.
+Bibah berterima kasih kepada kalian karena telah mau membantunya. Bibah juga mengingatkan agar
+semua aturan iptables harus disimpan pada sistem atau paling tidak kalian menyediakan script sebagai
+backup
+
+
+
+
+
+
+
+
+
 
