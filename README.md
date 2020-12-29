@@ -328,6 +328,17 @@ akses hanya dapat pada jadwal yang diperbolehkan
 
 ## (5) Akses dari subnet GRESIK hanya diperbolehkan pada pukul 17.00 hingga pukul 07.00 setiap harinya. Selain itu paket akan di REJECT.
 
+pada Malang buat file route5.sh
+```
+iptables -A INPUT -s 192.168.1.0/24 -m time --timestart 07:00 --timestop 17:00 -j REJECT
+```
+- bash route5.sh
+
+- cek dengan ping MALANG dari GRESIK
+akses pada jadwal yang tersebut akan diREJECT
+
+
+
 Karena kita memiliki 2 buah WEB Server, 
 
 ## (6) Bibah ingin SURABAYA disetting sehingga setiap request dari client yang mengakses DNS Server akan didistribusikan secara bergantian pada PROBOLINGGO port 80 dan MADIUN port 80.
